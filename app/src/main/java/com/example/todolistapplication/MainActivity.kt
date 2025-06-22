@@ -48,18 +48,18 @@ class MainActivity : ComponentActivity() {
         setContent {
             TodolistApplicationTheme(darkTheme = true) {
                 val context = LocalContext.current
-                val todoList = remember { mutableStateListOf<TodoItemData>() }
-                var showAddDialog by remember { mutableStateOf(false) }
-                var showDeleteConfirmDialog by remember { mutableStateOf(false) }
-                var showCompleteDialog by remember { mutableStateOf(false) }
-                var completedTaskTitle by remember { mutableStateOf("") }
+                val todoList = remember { mutableStateListOf<TodoItemData>() }//主页面事项list
+                var showAddDialog by remember { mutableStateOf(false) }//添加事项弹窗
+                var showDeleteConfirmDialog by remember { mutableStateOf(false) }//一键删除所有事项弹窗
+                var showCompleteDialog by remember { mutableStateOf(false) }//事项完成弹窗
+                var completedTaskTitle by remember { mutableStateOf("") }//完成的事项标题
 
                 //侧边栏
-                val drawerState = rememberDrawerState(DrawerValue.Closed)
-                val coroutineScope = rememberCoroutineScope()
-                val savedLists = remember { mutableStateMapOf<String, List<TodoItemData>>() }
+                val drawerState = rememberDrawerState(DrawerValue.Closed)//侧边栏状态
+                val coroutineScope = rememberCoroutineScope()//协程？
+                val savedLists = remember { mutableStateMapOf<String, List<TodoItemData>>() }//保存当前页面事项到侧边栏
 
-
+                //侧边栏内容（待修改）
                 val leftdrawerContent: @Composable () -> Unit = {
                     Column(modifier = Modifier.padding(16.dp)) {
                         savedLists.keys.forEach { name ->
@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        // 点击加载保存的列表
+
                                         todoList.clear()
                                         todoList.addAll(savedLists[name] ?: emptyList())
                                         coroutineScope.launch { drawerState.close() }
@@ -84,8 +84,10 @@ class MainActivity : ComponentActivity() {
                 // 读取本地数据
                 LaunchedEffect(Unit) {
                     val storedList = FileStorageHelper.loadTodoList(context)
-                    todoList.clear()
+                    //todoList.clear()
                     todoList.addAll(storedList)
+                    //todoList.addAll(sortTodoListByDeadline(storedList)) // 排序
+
                 }
 
 
@@ -94,6 +96,7 @@ class MainActivity : ComponentActivity() {
                     topBar = {
                         CenterAlignedTopAppBar(
                             modifier = Modifier.statusBarsPadding(),
+                            //侧边栏按钮
                             navigationIcon = {
                                 IconButton(onClick = {
                                     coroutineScope.launch {
@@ -104,6 +107,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
 
+                            //总标题
                             title = {
                                 Text(
                                     text = "Todo List",
@@ -113,17 +117,59 @@ class MainActivity : ComponentActivity() {
                             },
                             actions = {
 
-                                IconButton(onClick = {
+                                // 保存到侧边栏后清空当前页面
+                                var showSaveDialog by remember { mutableStateOf(false) }
+                                var saveListName by remember { mutableStateOf("") }
+
+                                /*IconButton(onClick = {
                                     savedLists["todolist1"] = todoList.toList()
-                                    todoList.clear() // 保存后清空当前页面
+                                    todoList.clear()
                                      })
                                 {
                                     Icon(Icons.Filled.Done, contentDescription = "保存")
+                                }*/
+
+
+                                //通过用户输入一个名称
+                                IconButton(onClick = { showSaveDialog = true }) {
+                                    Icon(Icons.Filled.Done, contentDescription = "保存")
+                                }
+                                if (showSaveDialog) {
+                                    AlertDialog(
+                                        onDismissRequest = { showSaveDialog = false },
+                                        title = { Text("保存任务列表") },
+                                        text = {
+                                            OutlinedTextField(
+                                                value = saveListName,
+                                                onValueChange = { saveListName = it },
+                                                label = { Text("列表名称") },
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        },
+                                        confirmButton = {
+                                            TextButton(onClick = {
+                                                if (saveListName.isNotBlank()) {
+                                                    savedLists[saveListName] = todoList.toList()
+                                                    showSaveDialog = false
+                                                }
+                                            }) {
+                                                Text("保存")
+                                            }
+                                        },
+                                        dismissButton = {
+                                            TextButton(onClick = { showSaveDialog = false }) {
+                                                Text("取消")
+                                            }
+                                        }
+                                    )
                                 }
 
+
+                                //添加一个事项
                                 IconButton(onClick = { showAddDialog = true }) {
                                     Icon(Icons.Filled.Add, contentDescription = "添加任务")
                                 }
+                                //删除所有事项
                                 IconButton(onClick = { showDeleteConfirmDialog = true }) {
                                     Icon(Icons.Filled.Delete, contentDescription = "删除全部")
                                 }
@@ -161,12 +207,18 @@ class MainActivity : ComponentActivity() {
                             },
                             onDelete = { index ->
                                 todoList.removeAt(index)
+                                //todoList.clear()
+                                //todoList.addAll(sortTodoListByDeadline(todoList)) // 排序
+
                                 FileStorageHelper.saveTodoList(context, todoList)
 
 
                             },
                             onSave = { index, updatedItem ->
                                 todoList[index] = updatedItem
+
+                                //todoList.clear()
+                                //todoList.addAll(sortTodoListByDeadline(todoList)) // 排序
                                 FileStorageHelper.saveTodoList(context, todoList)
                             }
                         )
@@ -179,6 +231,10 @@ class MainActivity : ComponentActivity() {
                             onConfirm = { title, deadline,description ->
                                 val newItem = TodoItemData(title, deadline,description, isDone = false)
                                 todoList.add(newItem)
+
+                                //todoList.clear()
+                                //todoList.addAll(sortTodoListByDeadline(todoList)) // 排序
+
                                 FileStorageHelper.saveTodoList(context, todoList)
                                 showAddDialog = false
                             },
@@ -225,7 +281,7 @@ class MainActivity : ComponentActivity() {
                             {
                                 Text("完成了：$completedTaskTitle")
                                 Spacer(modifier = Modifier.height(8.dp))
-                                // icon显示
+
                                 Image(
                                     painter = painterResource(id = R.drawable.done),
                                     contentDescription = "完成",
@@ -383,9 +439,6 @@ fun TodoItemDetailDialog(
     val hasChanged = title != todoItem.title || deadline != todoItem.deadline || description != todoItem.description|| imageUriStrings != (todoItem.imageUriStrings ?: "")
 
     var showUnsavedDialog by remember { mutableStateOf(false) }
-
-
-
 
     if (showUnsavedDialog) {
         AlertDialog(
@@ -599,105 +652,6 @@ fun AddTaskDialog(
     )
 }
 
-@Composable
-fun TodoItemEditDialog(
-    todoItem: TodoItemData,
-    onDelete: () -> Unit,
-    onSave: (TodoItemData) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var title by remember { mutableStateOf(todoItem.title) }
-    var deadline by remember { mutableStateOf(todoItem.deadline) }
-    var description by remember { mutableStateOf(todoItem.description) }
-
-    // 用来标记内容是否被修改过
-    val isEdited = title != todoItem.title || deadline != todoItem.deadline || description != todoItem.description
-
-    var showEditFailedDialog by remember { mutableStateOf(false) }
-
-    if (showEditFailedDialog) {
-        AlertDialog(
-            onDismissRequest = { showEditFailedDialog = false },
-            title = { Text("编辑失败") },
-            text = { Text("内容有修改但未保存，编辑失败") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showEditFailedDialog = false
-                    onDismiss()
-                }) {
-                    Text("确定")
-                }
-            }
-        )
-    }
-
-    AlertDialog(
-        onDismissRequest = {
-            if (isEdited) {
-                showEditFailedDialog = true
-            } else {
-                onDismiss()
-            }
-        },
-        title = { Text("编辑") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("名称") },
-                    //singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = deadline,
-                    onValueChange = { deadline = it },
-                    label = { Text("截止日期") },
-                    //singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("描述") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(100.dp),
-                    maxLines = 4
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                enabled = isEdited,
-                onClick = {
-                    onSave(todoItem.copy(title = title, deadline = deadline, description = description))
-                }
-            ) {
-                Text("保存")
-            }
-        },
-        dismissButton = {
-            Row {
-                TextButton(onClick = {
-                    if (isEdited) {
-                        showEditFailedDialog = true
-                    } else {
-                        onDismiss()
-                    }
-                }) {
-                    Text("关闭")
-                }
-                TextButton(onClick = onDelete) {
-                    Text("删除", color = MaterialTheme.colorScheme.error)
-                }
-            }
-        }
-    )
-}
-
 
 
 
@@ -721,3 +675,17 @@ fun TodoListPreview() {
 }
 
 //跳转页面
+
+//排序
+fun sortTodoListByDeadline(todoList: List<TodoItemData>): List<TodoItemData> {
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+    return todoList.sortedBy { todoItem ->
+        try {
+            // 将字符串格式的截止日期转换为 Date 对象
+            val date = dateFormat.parse(todoItem.deadline)
+            date?.time ?: Long.MAX_VALUE // 如果解析失败，将该任务放在最后
+        } catch (e: Exception) {
+            Long.MAX_VALUE // 如果解析失败，将该任务放在最后
+        }
+    }
+}
