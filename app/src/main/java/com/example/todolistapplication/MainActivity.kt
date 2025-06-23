@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -61,21 +62,28 @@ class MainActivity : ComponentActivity() {
 
                 //侧边栏内容（待修改）
                 val leftdrawerContent: @Composable () -> Unit = {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        savedLists.keys.forEach { name ->
-                            Text(
-                                text = name,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black),
+                        contentAlignment = Alignment.Center // 使内容居中
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            savedLists.keys.forEach { name ->
+                                Text(
+                                    text = name,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
 
-                                        todoList.clear()
-                                        todoList.addAll(savedLists[name] ?: emptyList())
-                                        coroutineScope.launch { drawerState.close() }
-                                    }
-                                    .padding(vertical = 8.dp),
-                                style = MaterialTheme.typography.bodyLarge
-                            )
+                                            todoList.clear()
+                                            todoList.addAll(savedLists[name] ?: emptyList())
+                                            coroutineScope.launch { drawerState.close() }
+                                        }
+                                        .padding(vertical = 20.dp),
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
                         }
                     }
                 }
@@ -88,6 +96,9 @@ class MainActivity : ComponentActivity() {
                     todoList.addAll(storedList)
                     //todoList.addAll(sortTodoListByDeadline(storedList)) // 排序
                     todoList.sortWith(compareBy { it.deadline })
+
+                    val storedSavedLists = FileStorageHelper.loadListsToSider(context)
+                    savedLists.putAll(storedSavedLists)
 
                 }
 
@@ -151,6 +162,7 @@ class MainActivity : ComponentActivity() {
                                             TextButton(onClick = {
                                                 if (saveListName.isNotBlank()) {
                                                     savedLists[saveListName] = todoList.toList()
+                                                    FileStorageHelper.saveListsToSider(context, savedLists.toMap())
                                                     showSaveDialog = false
                                                 }
                                             }) {
@@ -237,7 +249,7 @@ class MainActivity : ComponentActivity() {
                                 todoList.add(newItem)
 
                                 //todoList.clear()
-                                todoList.addAll(sortTodoListByDeadline(todoList)) // 排序
+                                //todoList.addAll(sortTodoListByDeadline(todoList)) // 排序
                                 todoList.sortWith(compareBy { it.deadline })
 
                                 FileStorageHelper.saveTodoList(context, todoList)
@@ -682,15 +694,15 @@ fun TodoListPreview() {
 //跳转页面
 
 //排序
-fun sortTodoListByDeadline(todoList: List<TodoItemData>): List<TodoItemData> {
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-    return todoList.sortedBy { todoItem ->
-        try {
-            // 将字符串格式的截止日期转换为 Date 对象
-            val date = dateFormat.parse(todoItem.deadline)
-            date?.time ?: Long.MAX_VALUE // 如果解析失败，将该任务放在最后
-        } catch (e: Exception) {
-            Long.MAX_VALUE // 如果解析失败，将该任务放在最后
-        }
-    }
-}
+//fun sortTodoListByDeadline(todoList: List<TodoItemData>): List<TodoItemData> {
+//    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+//    return todoList.sortedBy { todoItem ->
+//        try {
+//            // 将字符串格式的截止日期转换为 Date 对象
+//           val date = dateFormat.parse(todoItem.deadline)
+//            date?.time ?: Long.MAX_VALUE // 如果解析失败，将该任务放在最后
+//        } catch (e: Exception) {
+//            Long.MAX_VALUE // 如果解析失败，将该任务放在最后
+//        }
+//    }
+//}
