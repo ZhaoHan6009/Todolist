@@ -87,6 +87,7 @@ class MainActivity : ComponentActivity() {
                     //todoList.clear()
                     todoList.addAll(storedList)
                     //todoList.addAll(sortTodoListByDeadline(storedList)) // 排序
+                    todoList.sortWith(compareBy { it.deadline })
 
                 }
 
@@ -130,7 +131,7 @@ class MainActivity : ComponentActivity() {
                                 }*/
 
 
-                                //通过用户输入一个名称
+                                //修改：通过用户输入一个名称
                                 IconButton(onClick = { showSaveDialog = true }) {
                                     Icon(Icons.Filled.Done, contentDescription = "保存")
                                 }
@@ -209,6 +210,7 @@ class MainActivity : ComponentActivity() {
                                 todoList.removeAt(index)
                                 //todoList.clear()
                                 //todoList.addAll(sortTodoListByDeadline(todoList)) // 排序
+                                todoList.sortWith(compareBy { it.deadline })
 
                                 FileStorageHelper.saveTodoList(context, todoList)
 
@@ -219,6 +221,8 @@ class MainActivity : ComponentActivity() {
 
                                 //todoList.clear()
                                 //todoList.addAll(sortTodoListByDeadline(todoList)) // 排序
+                                todoList.sortWith(compareBy { it.deadline })
+
                                 FileStorageHelper.saveTodoList(context, todoList)
                             }
                         )
@@ -233,7 +237,8 @@ class MainActivity : ComponentActivity() {
                                 todoList.add(newItem)
 
                                 //todoList.clear()
-                                //todoList.addAll(sortTodoListByDeadline(todoList)) // 排序
+                                todoList.addAll(sortTodoListByDeadline(todoList)) // 排序
+                                todoList.sortWith(compareBy { it.deadline })
 
                                 FileStorageHelper.saveTodoList(context, todoList)
                                 showAddDialog = false
