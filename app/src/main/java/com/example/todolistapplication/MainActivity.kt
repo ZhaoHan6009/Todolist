@@ -25,6 +25,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -55,6 +56,8 @@ class MainActivity : ComponentActivity() {
                 var showCompleteDialog by remember { mutableStateOf(false) }//事项完成弹窗
                 var completedTaskTitle by remember { mutableStateOf("") }//完成的事项标题
 
+                var quote by remember { mutableStateOf("名人名言") }//
+
                 //侧边栏
                 val drawerState = rememberDrawerState(DrawerValue.Closed)//侧边栏状态
                 val coroutineScope = rememberCoroutineScope()//协程？
@@ -62,9 +65,12 @@ class MainActivity : ComponentActivity() {
 
                 //侧边栏内容（待修改）
                 val leftdrawerContent: @Composable () -> Unit = {
+                    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
                     Box(
                         modifier = Modifier
-                            .fillMaxSize()
+                            .width(screenWidth / 2) // 屏幕一半
+                            .fillMaxHeight()
+                            //.fillMaxSize()
                             .background(Color.Black),
                         contentAlignment = Alignment.Center // 使内容居中
                     ) {
@@ -99,6 +105,8 @@ class MainActivity : ComponentActivity() {
 
                     val storedSavedLists = FileStorageHelper.loadListsToSider(context)
                     savedLists.putAll(storedSavedLists)
+
+                    quote = loadQuote()//test quote
 
                 }
 
@@ -232,7 +240,7 @@ class MainActivity : ComponentActivity() {
                                 todoList[index] = updatedItem
 
                                 //todoList.clear()
-                                //todoList.addAll(sortTodoListByDeadline(todoList)) // 排序
+                                //todoList.addAll(sortTodoListByDeadline(todoList))
                                 todoList.sortWith(compareBy { it.deadline })
 
                                 FileStorageHelper.saveTodoList(context, todoList)
@@ -249,7 +257,7 @@ class MainActivity : ComponentActivity() {
                                 todoList.add(newItem)
 
                                 //todoList.clear()
-                                //todoList.addAll(sortTodoListByDeadline(todoList)) // 排序
+                                //todoList.addAll(sortTodoListByDeadline(todoList))
                                 todoList.sortWith(compareBy { it.deadline })
 
                                 FileStorageHelper.saveTodoList(context, todoList)
@@ -287,17 +295,24 @@ class MainActivity : ComponentActivity() {
                         onDismissRequest = { showCompleteDialog = false },
                         title = {
                             Text("You did it!",
-                                fontSize = 22.sp,
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.padding(16.dp),
                             )
+
                                 },
                         text = {
                             Column( modifier = Modifier.fillMaxWidth(),
                                     horizontalAlignment = Alignment.CenterHorizontally)
                             {
-                                Text("完成了：$completedTaskTitle")
-                                Spacer(modifier = Modifier.height(8.dp))
+                                //Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text ="名人名言：$quote" ,
+                                    fontSize = 16.sp,
+                                    modifier = Modifier.padding(16.dp),
+                                )
+                                //Spacer(modifier = Modifier.height(8.dp))
+
 
                                 Image(
                                     painter = painterResource(id = R.drawable.done),
@@ -305,6 +320,12 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier
                                         .size(120.dp)
                                         .padding(top = 8.dp)
+                                )
+
+                                Text(
+                                    text = "你完成了：$completedTaskTitle",
+                                    fontSize = 16.sp,
+                                    modifier = Modifier.padding(16.dp),
                                 )
                             }
                         },
